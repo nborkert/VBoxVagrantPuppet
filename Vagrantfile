@@ -1,31 +1,37 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant::Config.run do |config|
-  
-  # base box and URL where to get it if not present
-  config.vm.box = "lucid64"
-  config.vm.box_url = "http://files.vagrantup.com/lucid64.box"
+VAGRANTFILE_API_VERSION = "2"
 
-  # config for the appserver box
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # base box and URL where to get it if not present
+ config.vm.box = "CentOS"
+  config.vm.box_url = "http://developer.nrel.gov/downloads/vagrant-boxes/CentOS-6.4-x86_64-v20130731.box"
+
+#  config.vm.box = "CentOS5"  
+#  config.vm.box_url = "http://tag1consulting.com/files/centos-5.9-x86-64-minimal.box"
+ 
+# config for the appserver box
   config.vm.define "appserver" do |app|
-    app.vm.boot_mode = :gui
-    app.vm.network :hostonly, "33.33.33.10"
+    app.vm.network  :forwarded_port, host: 8000, guest: 8080
     app.vm.host_name = "appserver01.local"
+    app.vm.provision :shell, :path => "setIPTables.sh"
     app.vm.provision :puppet do |puppet|
       puppet.manifests_path = "manifests"
       puppet.manifest_file = "appserver.pp"
     end
+    app.vm.provision :shell, :path => "copyWar.sh"
   end
 
-  # config for the dbserver box
-  config.vm.define "dbserver" do |db|
-    db.vm.boot_mode = :gui
-    db.vm.network :hostonly, "33.33.33.11"
-    db.vm.host_name = "dbserver01.local"
-    db.vm.provision :puppet do |puppet|
+  # config for the webserver box
+  config.vm.define "webserver" do |web|
+    web.vm.network :forwarded_port, host: 9000, guest: 80
+    web.vm.host_name = "webserver01.local"
+    web.vm.provision :shell, :path => "setIPTables.sh"
+    web.vm.provision :puppet do |puppet|
       puppet.manifests_path = "manifests"
-      puppet.manifest_file = "dbserver.pp"
+      puppet.manifest_file = "webserver.pp"
     end
   end
 
